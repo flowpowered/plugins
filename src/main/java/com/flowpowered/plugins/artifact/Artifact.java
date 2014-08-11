@@ -1,33 +1,12 @@
 package com.flowpowered.plugins.artifact;
 
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import com.flowpowered.commons.SimpleFuture;
 
 public class Artifact {
-    private Queue<ArtifactJob> jobQueue = new ConcurrentLinkedQueue<>();
-    private ArtifactState state = ArtifactState.UNDEFINED;
-    private volatile boolean gone = false;
+    protected volatile SimpleFuture<?> future;
+    protected volatile ArtifactLoadState state = ArtifactLoadState.UNDEFINED;
 
-    public ArtifactState getState() {
+    public ArtifactLoadState getState() {
         return state;
-    }
-
-    /**
-     * Should be only called from the thread that is currently executing {@link ArtifactManager#pulse(String)}
-     */
-    public void setState(ArtifactState state) {
-        this.state = state;
-    }
-
-    public Queue<ArtifactJob> getJobQueue() {
-        return jobQueue;
-    }
-
-    public boolean isGone() {
-        return gone;
-    }
-
-    protected void makeGone() {
-        this.gone = true;
     }
 }
