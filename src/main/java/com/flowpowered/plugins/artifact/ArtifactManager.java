@@ -25,8 +25,13 @@ public class ArtifactManager {
         if (artifact == null) {
             enqueuePulse(artifactName);
         } else {
-            // FIXME: Race condition - we may enqueue the job too late.
             artifact.getJobQueue().add(job);
+
+            if (artifact.isGone()) {
+                // Our job might be never processed, so let's try again. Better have 2 jobs than none.
+                // FIXME: Convert this to iteration, or we might get StackOverflows.
+                return locate(artifactName);
+            }
         }
         return job.getFuture();
     }
@@ -47,6 +52,7 @@ public class ArtifactManager {
 
             if (job instanceof RemoveJob) {
                 byName.remove(artifactName);
+                artifact.makeGone();
 
                 for (ArtifactJob j : artifact.getJobQueue()) {
                     if (j instanceof LocateJob) {

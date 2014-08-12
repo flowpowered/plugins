@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class Artifact {
     private Queue<ArtifactJob> jobQueue = new ConcurrentLinkedQueue<>();
     private ArtifactState state = ArtifactState.UNDEFINED;
+    private volatile boolean gone = false;
 
     public ArtifactState getState() {
         return state;
@@ -22,4 +23,11 @@ public class Artifact {
         return jobQueue;
     }
 
+    public boolean isGone() {
+        return gone;
+    }
+
+    protected void makeGone() {
+        this.gone = true;
+    }
 }
