@@ -114,12 +114,17 @@
 
     <!-- Project dependencies -->
     <dependencies>
-        <!-- Provided by third-party -->
         <dependency>
             <groupId>com.flowpowered</groupId>
             <artifactId>flow-commons</artifactId>
             <version>0.1.0-SNAPSHOT</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
+        </dependency>        
+        <dependency>
+            <groupId>com.flowpowered</groupId>
+            <artifactId>flow-cerealization</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
