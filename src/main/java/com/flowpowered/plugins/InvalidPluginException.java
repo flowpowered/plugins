@@ -21,43 +21,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.flowpowered.plugins.simple;
+package com.flowpowered.plugins;
 
-import org.slf4j.Logger;
+public class InvalidPluginException extends Exception {
+    private static final long serialVersionUID = 15816838168L;
 
-import com.flowpowered.plugins.PluginHandle;
-import com.flowpowered.plugins.PluginManager;
-
-/**
- * This is specific to SimpleJavaPluginLoader. Don't worry, if you use the {@link com.flowpowered.plugins.annotated.AnnotatedJavaPluginLoader} this class won't be used.
- */
-public abstract class JavaPlugin {
-    private boolean initialized = false;
-    private PluginManager manager;
-    private PluginHandle handle; // TODO: Sure?
-
-    protected final void init(PluginManager manager, PluginHandle handle) {
-        if (initialized) {
-            throw new IllegalStateException("Tried to initialize twice");
-        }
-        this.initialized = true;
-        this.manager = manager;
-        this.handle = handle;
+    public InvalidPluginException() {
     }
 
-    protected abstract void onEnable();
-
-    protected abstract void onDisable();
-
-    protected PluginManager getManager() {
-        return manager;
+    public InvalidPluginException(String message) {
+        super(message);
     }
 
-    protected PluginHandle getSelfHandle() {
-        return handle;
-    }
-
-    protected Logger getLogger() {
-        return handle.getLogger();
+    public InvalidPluginException(String message, Throwable cause) {
+        super(message, cause);
     }
 }

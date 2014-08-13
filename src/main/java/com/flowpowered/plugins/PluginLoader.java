@@ -27,7 +27,7 @@ import java.util.Map;
 
 public interface PluginLoader {
 
-    PluginHandle load(PluginManager manager, String pluginName) throws PluginException;
+    Plugin load(PluginManager manager, String pluginName) throws InvalidPluginException;
 
-    Map<String, PluginHandle> loadAll(PluginManager manager);
+    Map<String, Plugin> loadAll(PluginManager manager);
 }

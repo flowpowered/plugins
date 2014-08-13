@@ -23,16 +23,15 @@
  */
 package com.flowpowered.plugins.annotated;
 
-import org.slf4j.Logger;
-
-import com.flowpowered.plugins.PluginHandle;
+import com.flowpowered.plugins.Plugin;
 import com.flowpowered.plugins.PluginManager;
+import org.slf4j.Logger;
 
 public class Context {
     private final PluginManager manager;
-    private final PluginHandle handle;
+    private final Plugin handle;
 
-    public Context(PluginManager manager, PluginHandle handle) {
+    public Context(PluginManager manager, Plugin handle) {
         this.manager = manager;
         this.handle = handle;
     }

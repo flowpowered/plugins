@@ -21,28 +21,39 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.flowpowered.plugins.simple;
+package com.flowpowered.plugins;
 
-import com.flowpowered.plugins.PluginHandle;
-import com.flowpowered.plugins.PluginManager;
+import org.slf4j.Logger;
 
-public abstract class AbstractPluginHandle extends PluginHandle {
-    private final PluginManager manager;
-    private final String name;
+public abstract class Plugin {
+    private String name;
+    private PluginManager manager;
 
-    public AbstractPluginHandle(PluginManager manager, String name) {
-        this.manager = manager;
-        this.name = name;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
     public PluginManager getManager() {
         return manager;
     }
 
+    public String getName() {
+        return name;
+    }
+
+    protected abstract void onEnable() throws Exception;
+
+    protected abstract void onDisable() throws Exception;
+
+    public void enable() throws Exception {
+        getManager().enable(this);
+    }
+
+    public void disable() throws Exception {
+        getManager().disable(this);
+    }
+
+    public Logger getLogger() {
+        return getManager().getLogger(this);
+    }
+
+    public PluginState getState() {
+        return getManager().getState(this);
+    }
 }

@@ -24,6 +24,7 @@
 package com.flowpowered.plugins.annotated;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
@@ -35,9 +36,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import com.flowpowered.plugins.PluginHandle;
 import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
+import com.flowpowered.plugins.simple.SimplePluginLoader;
+import static com.flowpowered.plugins.simple.SimplePluginLoader.getFieldSilent;
 import org.reflections.Reflections;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
@@ -45,6 +47,12 @@ import org.reflections.util.ConfigurationBuilder;
 public class AnnotatedJavaPluginLoader implements PluginLoader {
     private final ClassLoader cl;
     private final Path path;
+    private static final Field nameField = getFieldSilent(com.flowpowered.plugins.Plugin.class, "name");
+    private static final Field managerField = getFieldSilent(com.flowpowered.plugins.Plugin.class, "manager");
+    private static final Field objectField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "annotated");
+    private static final Field enableField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "enable");
+    private static final Field disableField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "disable");
+    private static final Field contextField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "context");
 
     public AnnotatedJavaPluginLoader(Path folder, ClassLoader cl) {
         this.cl = cl;
@@ -75,7 +83,7 @@ public class AnnotatedJavaPluginLoader implements PluginLoader {
     }
 
     @Override
-    public PluginHandle load(PluginManager manager, String pluginName) {
+    public AnnotatedPlugin load(PluginManager manager, String pluginName) {
         String main = null;
         if (main != null) {
             try {
@@ -107,9 +115,9 @@ public class AnnotatedJavaPluginLoader implements PluginLoader {
                     }
                 }
 
-                Object plugin = clazz.newInstance();
-                PluginHandle handle = new AnnotatedJavaPluginHandle(manager, pluginName, plugin, enable, disable);
-                return handle;
+                Object annotated = clazz.newInstance();
+                AnnotatedPlugin plugin = new AnnotatedPlugin();
+                return init(plugin, main, manager, annotated, enable, disable, new Context(manager, plugin));
             } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException | ExceptionInInitializerError e) {
                 // TODO: log
                 e.printStackTrace();
@@ -139,9 +147,26 @@ public class AnnotatedJavaPluginLoader implements PluginLoader {
         return false;
     }
 
+
+
+    public static Set<Class<?>> find(URL url, ClassLoader cl) {
+        Reflections ref = new Reflections(new ConfigurationBuilder().addUrls(url).addClassLoader(cl).setScanners(new TypeAnnotationsScanner()));
+        return ref.getTypesAnnotatedWith(Plugin.class);
+    }
+
+    protected AnnotatedPlugin init(AnnotatedPlugin plugin, String name, PluginManager manager, Object annotated, Method enable, Method disable, Context context) throws IllegalArgumentException, IllegalAccessException {
+        SimplePluginLoader.setField(nameField, plugin, name);
+        SimplePluginLoader.setField(managerField, plugin, manager);
+        SimplePluginLoader.setField(objectField, plugin, annotated);
+        SimplePluginLoader.setField(enableField, plugin, enable);
+        SimplePluginLoader.setField(disableField, plugin, disable);
+        SimplePluginLoader.setField(contextField, plugin, context);
+        return plugin;
+    }
+
     @Override
-    public Map<String, PluginHandle> loadAll(PluginManager manager) {
-        Map<String, PluginHandle> loaded = new HashMap<>();
+    public Map<String, com.flowpowered.plugins.Plugin> loadAll(PluginManager manager) {
+        Map<String, com.flowpowered.plugins.Plugin> loaded = new HashMap<>();
         for (Path jarPath : getJarFiles()) {
             try {
                 for (Class<?> plugin : find(jarPath.toUri().toURL(), cl)) {
@@ -154,10 +179,5 @@ public class AnnotatedJavaPluginLoader implements PluginLoader {
             }
         }
         return loaded;
-    }
-
-    public static Set<Class<?>> find(URL url, ClassLoader cl) {
-        Reflections ref = new Reflections(new ConfigurationBuilder().addUrls(url).addClassLoader(cl).setScanners(new TypeAnnotationsScanner()));
-        return ref.getTypesAnnotatedWith(Plugin.class);
     }
 }

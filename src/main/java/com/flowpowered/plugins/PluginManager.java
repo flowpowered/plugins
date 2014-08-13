@@ -27,13 +27,15 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PluginManager {
     private final List<PluginLoader> loaders = new LinkedList<>(); // TODO: Make this a set and make PluginLoaders hashset/map compatible?
-    private final Map<String, PluginHandle> plugins = new HashMap<>();
+    private final Map<String, Plugin> plugins = new HashMap<>();
+    private final Map<Plugin, PluginState> states = new HashMap<>();
     private final Logger logger;
     private final PluginLoggerFactory logFactory;
 
@@ -46,40 +48,40 @@ public class PluginManager {
         this(logger, defaultPluginLoggerFactory(logger));
     }
 
-    public void enable(PluginHandle plugin) throws PluginException {
+    public void enable(Plugin plugin) throws Exception {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
         // TODO: thread safety
-        if (plugin.getState() != PluginState.DISABLED) {
+        if (states.get(plugin) != PluginState.DISABLED) {
             // TODO: don't fail silently
             return;
         }
-        plugin.setState(PluginState.ENABLING);
+        states.put(plugin, PluginState.ENABLING);
         try {
             plugin.onEnable();
-            plugin.setState(PluginState.ENABLED);
-        } catch (PluginException e) {
-            plugin.setState(PluginState.DISABLED); // TODO: sure? Maybe add state FAILED ?
+            states.put(plugin, PluginState.ENABLED);
+        } catch (Exception e) {
+            states.put(plugin, PluginState.DISABLED); // TODO: sure? Maybe add state FAILED ?
             throw e;
         }
     }
 
-    public void disable(PluginHandle plugin) throws PluginException {
+    public void disable(Plugin plugin) throws Exception {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
         // TODO: thread safety
-        if (plugin.getState() != PluginState.ENABLED) {
+        if (states.get(plugin) != PluginState.ENABLED) {
             // TODO: don't fail silently
             return;
         }
-        plugin.setState(PluginState.DISABLING);
+        states.put(plugin, PluginState.DISABLING);
         try {
             plugin.onDisable();
-            plugin.setState(PluginState.DISABLED);
-        } catch (PluginException e) {
-            plugin.setState(PluginState.DISABLED); // TODO: Now it's state is what? DISABLED ? It failed to disable... add FAILED state maybe?
+            states.put(plugin, PluginState.DISABLED);
+        } catch (Exception e) {
+            states.put(plugin, PluginState.DISABLED); // TODO: Now it's state is what? DISABLED ? It failed to disable... add FAILED state maybe?
             throw e;
         }
     }
@@ -91,15 +93,24 @@ public class PluginManager {
          * - this loads more than needed, should be more lazy
          * - this scans for them only once and never checks again
          */
-        plugins.putAll(loader.loadAll(this));
+        Map<String, Plugin> all = loader.loadAll(this);
+        for (Entry<String, Plugin> e : all.entrySet()) {
+            Plugin plugin = e.getValue();
+            plugins.put(e.getKey(), plugin);
+            states.put(plugin, PluginState.DISABLED);
+        }
     }
 
-    public Logger getLogger(PluginHandle plugin) {
+    public Logger getLogger(Plugin plugin) {
         return logFactory.getLogger(plugin.getName());
     }
 
-    public PluginHandle getPluginHandle(String name) {
+    public Plugin getPlugin(String name) {
         return plugins.get(name);
+    }
+
+    public PluginState getState(Plugin plugin) {
+        return states.get(plugin);
     }
 
     protected static PluginLoggerFactory defaultPluginLoggerFactory(Logger logger) {

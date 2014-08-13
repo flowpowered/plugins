@@ -24,6 +24,7 @@
 package com.flowpowered.plugins.simple;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -33,29 +34,30 @@ import java.util.Map;
 import com.flowpowered.cerealization.config.Configuration;
 import com.flowpowered.cerealization.config.ConfigurationNode;
 import com.flowpowered.cerealization.config.yaml.YamlConfiguration;
-import com.flowpowered.plugins.PluginException;
-import com.flowpowered.plugins.PluginHandle;
+import com.flowpowered.plugins.InvalidPluginException;
+import com.flowpowered.plugins.Plugin;
 import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
-import com.flowpowered.plugins.WrappedPluginException;
 
-public class SimpleJavaPluginLoader implements PluginLoader {
-    static final String DESCRIPTOR_NAME = "plugin.yml";
-    static final String NAME_KEY = "name";
-    static final String MAIN_KEY = "main";
-
+public class SimplePluginLoader implements PluginLoader {
+    private static final String DESCRIPTOR_NAME = "plugin.yml";
+    private static final String NAME_KEY = "name";
+    private static final String MAIN_KEY = "main";
+    private static final Field nameField = getFieldSilent(Plugin.class, "name");
+    private static final Field managerField = getFieldSilent(Plugin.class, "manager");
     private final ClassLoader cl;
     private final String descriptorName, nameKey, mainKey;
 
-    public SimpleJavaPluginLoader(ClassLoader cl) {
-        this(cl, DESCRIPTOR_NAME, NAME_KEY, MAIN_KEY);
+
+    public SimplePluginLoader(ClassLoader cl) {
+        this(cl, DESCRIPTOR_NAME);
     }
 
-    public SimpleJavaPluginLoader(ClassLoader cl, String descriptorName) {
+    public SimplePluginLoader(ClassLoader cl, String descriptorName) {
         this(cl, descriptorName, NAME_KEY, MAIN_KEY);
     }
 
-    public SimpleJavaPluginLoader(ClassLoader cl, String descriptorName, String nameKey, String mainKey) {
+    public SimplePluginLoader(ClassLoader cl, String descriptorName, String nameKey, String mainKey) {
         this.cl = cl;
         this.descriptorName = descriptorName;
         this.nameKey = nameKey;
@@ -67,21 +69,46 @@ public class SimpleJavaPluginLoader implements PluginLoader {
     }
 
     @Override
-    public PluginHandle load(PluginManager manager, String pluginName) throws PluginException {
+    public Plugin load(PluginManager manager, String pluginName) throws InvalidPluginException {
         return load(manager, pluginName, findMains());
     }
 
+    protected Plugin load(PluginManager manager, String pluginName, Map<String, String> mains) throws InvalidPluginException {
+        String main = mains.get(pluginName);
+        if (main == null) {
+            throw new InvalidPluginException("No main class specified");
+        }
+        try {
+            Class<?> clazz = Class.forName(main, false, cl);
+            Class<? extends Plugin> pluginClass = clazz.asSubclass(Plugin.class);
+            return init(pluginClass.newInstance(), pluginName);
+        } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
+            // TODO: log
+            e.printStackTrace();
+        } catch (ExceptionInInitializerError e) {
+            throw new InvalidPluginException("Exception in Plugin initialization", e);
+        }
+        return null;
+    }
+
+    protected Plugin init(Plugin plugin, String name) throws IllegalArgumentException, IllegalAccessException {
+        setField(nameField, plugin, name);
+        setField(managerField, plugin, this);
+        return plugin;
+    }
+
     @Override
-    public Map<String, PluginHandle> loadAll(PluginManager manager) {
-        Map<String, PluginHandle> loaded = new HashMap<>();
+    public Map<String, Plugin> loadAll(PluginManager manager) {
+        Map<String, Plugin> loaded = new HashMap<>();
         Map<String, String> mains = findMains();
         for (String name : mains.keySet()) {
+            Plugin plugin;
             try {
-                PluginHandle plugin = load(manager, name, mains);
+                plugin = load(manager, name, mains);
                 if (plugin != null) {
                     loaded.put(name, plugin);
                 }
-            } catch (PluginException e) {
+            } catch (Exception ex) {
                 // TODO: log
             }
         }
@@ -92,7 +119,7 @@ public class SimpleJavaPluginLoader implements PluginLoader {
         Map<String, String> mains = new HashMap<>();
         Enumeration<URL> urls;
         try {
-            urls = getClassLoader().getResources(descriptorName);
+            urls = cl.getResources(descriptorName);
         } catch (IOException e) {
             // TODO log
             e.printStackTrace();
@@ -121,22 +148,17 @@ public class SimpleJavaPluginLoader implements PluginLoader {
         return mains;
     }
 
-    protected PluginHandle load(PluginManager manager, String pluginName, Map<String, String> mains) throws PluginException {
-        String main = mains.get(pluginName);
-        if (main == null) {
-            throw new PluginException("No main class specified");
-        }
+    public static Field getFieldSilent(Class<?> clazz, String name) {
         try {
-            Class<?> clazz = Class.forName(main, false, getClassLoader());
-            Class<? extends JavaPlugin> pluginClass = clazz.asSubclass(JavaPlugin.class);
-            JavaPlugin plugin = pluginClass.newInstance();
-            PluginHandle handle = new SimpleJavaPluginHandle(manager, plugin, pluginName);
-            plugin.init(manager, handle);
-            return handle;
-        } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
-            throw new PluginException("Invalid plugin main class", e);
-        } catch (ExceptionInInitializerError e) {
-            throw new WrappedPluginException("Could not instantiate plugin main class", e.getCause());
+            return clazz.getDeclaredField(name);
+        } catch (NoSuchFieldException | SecurityException ex) {
+            throw new IllegalStateException(ex);
         }
+    }
+
+    public static void setField(Field f, Object instance, Object value) throws IllegalArgumentException, IllegalAccessException {
+        f.setAccessible(true);
+        f.set(instance, value);
+        f.setAccessible(false);
     }
 }
