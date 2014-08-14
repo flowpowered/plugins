@@ -1,4 +1,4 @@
-package com.flowpowered.plugins.basic;
+package com.flowpowered.plugins.simple;
 
 import org.slf4j.Logger;
 

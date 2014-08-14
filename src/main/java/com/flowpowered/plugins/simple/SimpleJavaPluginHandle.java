@@ -1,4 +1,4 @@
-package com.flowpowered.plugins.basic;
+package com.flowpowered.plugins.simple;
 
 import com.flowpowered.plugins.PluginHandle;
 import com.flowpowered.plugins.PluginManager;

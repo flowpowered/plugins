@@ -1,4 +1,4 @@
-package com.flowpowered.plugins.basic;
+package com.flowpowered.plugins.simple;
 
 import java.io.IOException;
 import java.net.URL;
