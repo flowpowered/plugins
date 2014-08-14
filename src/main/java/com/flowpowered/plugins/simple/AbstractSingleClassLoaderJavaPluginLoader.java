@@ -40,7 +40,6 @@ public abstract class AbstractSingleClassLoaderJavaPluginLoader implements Plugi
     }
 
     protected ClassLoader getClassLoader() {
-        Object o;
         return cl;
     }
 
