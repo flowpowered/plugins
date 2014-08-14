@@ -1,7 +1,6 @@
 package com.flowpowered.plugins.basic;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -11,7 +10,6 @@ import java.util.Set;
 
 import com.flowpowered.cerealization.config.Configuration;
 import com.flowpowered.cerealization.config.ConfigurationNode;
-import com.flowpowered.cerealization.config.ConfigurationNodeSource;
 import com.flowpowered.cerealization.config.yaml.YamlConfiguration;
 import com.flowpowered.plugins.PluginHandle;
 import com.flowpowered.plugins.PluginLoader;
@@ -99,10 +97,5 @@ public class SimpleJavaPluginLoader implements PluginLoader {
 
         }
         return mains;
-    }
-
-    protected ConfigurationNodeSource parseDescriptor(Reader reader) {
-        Configuration conf = new YamlConfiguration(reader);
-        return conf;
     }
 }
