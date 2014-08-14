@@ -44,7 +44,9 @@ public class SimpleJavaPluginLoader implements PluginLoader {
                 Class<?> clazz = Class.forName(main, false, cl);
                 Class<? extends JavaPlugin> pluginClass = clazz.asSubclass(JavaPlugin.class);
                 JavaPlugin plugin = pluginClass.newInstance();
-                return new SimpleJavaPluginHandle(manager, plugin, pluginName);
+                PluginHandle handle = new SimpleJavaPluginHandle(manager, plugin, pluginName);
+                plugin.init(manager, handle);
+                return handle;
             } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException | ExceptionInInitializerError e) {
                 // TODO: log
                 e.printStackTrace();
