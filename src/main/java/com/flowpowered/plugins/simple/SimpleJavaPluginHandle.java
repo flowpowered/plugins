@@ -1,27 +1,12 @@
 package com.flowpowered.plugins.simple;
 
-import com.flowpowered.plugins.PluginHandle;
 import com.flowpowered.plugins.PluginManager;
 
-public class SimpleJavaPluginHandle extends PluginHandle {
-    private final PluginManager manager;
+public class SimpleJavaPluginHandle extends AbstractPluginHandle {
     private final JavaPlugin plugin;
-    private final String name;
-
     public SimpleJavaPluginHandle(PluginManager manager, JavaPlugin plugin, String name) {
-        this.manager = manager;
+        super(manager, name);
         this.plugin = plugin;
-        this.name = name;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public PluginManager getManager() {
-        return manager;
     }
 
     @Override
