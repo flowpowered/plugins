@@ -7,7 +7,7 @@ public interface PluginLoader {
 
     Set<String> scan();
 
-    PluginHandle load(PluginManager manager, String pluginName);
+    PluginHandle load(PluginManager manager, String pluginName) throws PluginException;
 
     Map<String, PluginHandle> loadAll(PluginManager manager);
 }

@@ -3,7 +3,9 @@ package com.flowpowered.plugins.annotated;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.flowpowered.plugins.PluginException;
 import com.flowpowered.plugins.PluginManager;
+import com.flowpowered.plugins.WrappedPluginException;
 import com.flowpowered.plugins.simple.AbstractPluginHandle;
 
 public class AnnotatedJavaPluginHandle extends AbstractPluginHandle {
@@ -21,24 +23,27 @@ public class AnnotatedJavaPluginHandle extends AbstractPluginHandle {
     }
 
     @Override
-    protected void onEnable() {
+    protected void onEnable() throws PluginException {
         try {
-            enable.invoke(plugin, context); // TODO: pass context
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            enable.invoke(plugin, context);
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
+        } catch (InvocationTargetException e) {
+            throw new WrappedPluginException("Exception in enable method", e.getCause());
         }
 
     }
 
     @Override
-    protected void onDisable() {
+    protected void onDisable() throws PluginException {
         try {
-            disable.invoke(plugin, context); // TODO: pass context
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            enable.invoke(plugin, context);
+        } catch (IllegalAccessException | IllegalArgumentException e) {
+            throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
+        } catch (InvocationTargetException e) {
+            throw new WrappedPluginException("Exception in enable method", e.getCause());
         }
+
     }
 
 }

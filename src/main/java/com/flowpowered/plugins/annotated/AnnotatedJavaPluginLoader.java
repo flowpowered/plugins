@@ -63,6 +63,11 @@ public class AnnotatedJavaPluginLoader extends AbstractSingleClassLoaderJavaPlug
 
     protected boolean validateMethod(Method method) {
         if (Modifier.isAbstract(method.getModifiers())) {
+            // TODO: log
+            return false;
+        }
+        if (!method.isAccessible()) {
+            // TODO: log
             return false;
         }
         Class<?>[] params = method.getParameterTypes();

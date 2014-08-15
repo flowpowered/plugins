@@ -19,7 +19,7 @@ public class PluginManager {
         this.pluginLoggerPrefix = logger.getName() + ".";
     }
 
-    public void enable(PluginHandle plugin) {
+    public void enable(PluginHandle plugin) throws PluginException {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
@@ -29,11 +29,16 @@ public class PluginManager {
             return;
         }
         plugin.setState(PluginState.ENABLING);
-        plugin.onEnable(); // TODO: Add a way for it to fail
-        plugin.setState(PluginState.ENABLED);
+        try {
+            plugin.onEnable();
+            plugin.setState(PluginState.ENABLED);
+        } catch (PluginException e) {
+            plugin.setState(PluginState.DISABLED); // TODO: sure? Maybe add state FAILED ?
+            throw e;
+        }
     }
 
-    public void disable(PluginHandle plugin) {
+    public void disable(PluginHandle plugin) throws PluginException {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
@@ -43,8 +48,13 @@ public class PluginManager {
             return;
         }
         plugin.setState(PluginState.DISABLING);
-        plugin.onDisable(); // TODO: Add a way for it to fail
-        plugin.setState(PluginState.DISABLED);
+        try {
+            plugin.onDisable();
+            plugin.setState(PluginState.DISABLED);
+        } catch (PluginException e) {
+            plugin.setState(PluginState.DISABLED); // TODO: Now it's state is what? DISABLED ? It failed to disable... add FAILED state maybe?
+            throw e;
+        }
     }
 
     public void addLoader(PluginLoader loader) {

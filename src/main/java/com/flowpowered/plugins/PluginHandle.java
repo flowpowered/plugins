@@ -9,15 +9,15 @@ public abstract class PluginHandle {
 
     public abstract PluginManager getManager();
 
-    protected abstract void onEnable();
+    protected abstract void onEnable() throws PluginException;
 
-    protected abstract void onDisable();
+    protected abstract void onDisable() throws PluginException;
 
-    public void enable() {
+    public void enable() throws PluginException {
         getManager().enable(this);
     }
 
-    public void disable() {
+    public void disable() throws PluginException {
         getManager().disable(this);
     }
 

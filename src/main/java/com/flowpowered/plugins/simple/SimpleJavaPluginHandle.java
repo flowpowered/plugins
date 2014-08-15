@@ -1,6 +1,8 @@
 package com.flowpowered.plugins.simple;
 
+import com.flowpowered.plugins.PluginException;
 import com.flowpowered.plugins.PluginManager;
+import com.flowpowered.plugins.WrappedPluginException;
 
 public class SimpleJavaPluginHandle extends AbstractPluginHandle {
     private final JavaPlugin plugin;
@@ -10,13 +12,21 @@ public class SimpleJavaPluginHandle extends AbstractPluginHandle {
     }
 
     @Override
-    protected void onEnable() {
-        plugin.onEnable();
+    protected void onEnable() throws PluginException {
+        try {
+            plugin.onEnable();
+        } catch (Throwable t) {
+            throw new WrappedPluginException("Exception in onEnable()", t);
+        }
     }
 
     @Override
-    protected void onDisable() {
-        plugin.onDisable();
+    protected void onDisable() throws PluginException {
+        try {
+            plugin.onDisable();
+        } catch (Throwable t) {
+            throw new WrappedPluginException("Exception in onDisable()", t);
+        }
     }
 
 }

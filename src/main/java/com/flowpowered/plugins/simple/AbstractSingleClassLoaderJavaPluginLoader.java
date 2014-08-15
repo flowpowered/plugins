@@ -11,6 +11,7 @@ import java.util.Set;
 import com.flowpowered.cerealization.config.Configuration;
 import com.flowpowered.cerealization.config.ConfigurationNode;
 import com.flowpowered.cerealization.config.yaml.YamlConfiguration;
+import com.flowpowered.plugins.PluginException;
 import com.flowpowered.plugins.PluginHandle;
 import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
@@ -49,7 +50,7 @@ public abstract class AbstractSingleClassLoaderJavaPluginLoader implements Plugi
     }
 
     @Override
-    public PluginHandle load(PluginManager manager, String pluginName) {
+    public PluginHandle load(PluginManager manager, String pluginName) throws PluginException {
         return load(manager, pluginName, findMains());
     }
 
@@ -58,15 +59,19 @@ public abstract class AbstractSingleClassLoaderJavaPluginLoader implements Plugi
         Map<String, PluginHandle> loaded = new HashMap<>();
         Map<String, String> mains = findMains();
         for (String name : mains.keySet()) {
-            PluginHandle plugin = load(manager, name, mains);
-            if (plugin != null) {
-                loaded.put(name, plugin);
+            try {
+                PluginHandle plugin = load(manager, name, mains);
+                if (plugin != null) {
+                    loaded.put(name, plugin);
+                }
+            } catch (PluginException e) {
+                // TODO: log
             }
         }
         return loaded;
     }
 
-    protected abstract PluginHandle load(PluginManager manager, String pluginName, Map<String, String> mains);
+    protected abstract PluginHandle load(PluginManager manager, String pluginName, Map<String, String> mains) throws PluginException;
 
     protected Map<String, String> findMains() {
         Map<String, String> mains = new HashMap<>();
