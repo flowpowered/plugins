@@ -23,30 +23,60 @@
  */
 package com.flowpowered.plugins.annotated;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import com.flowpowered.plugins.PluginHandle;
+import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
-import com.flowpowered.plugins.simple.AbstractSingleClassLoaderJavaPluginLoader;
+import org.reflections.Reflections;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ConfigurationBuilder;
 
-public class AnnotatedJavaPluginLoader extends AbstractSingleClassLoaderJavaPluginLoader {
-    private static final String DESCRIPTOR_NAME = "annotatedPlugin.yml";
+public class AnnotatedJavaPluginLoader implements PluginLoader {
+    private final ClassLoader cl;
+    private final File folder;
 
-    public AnnotatedJavaPluginLoader(ClassLoader cl) {
-        super(cl, DESCRIPTOR_NAME);
+    public AnnotatedJavaPluginLoader(File folder, ClassLoader cl) {
+        this.cl = cl;
+        this.folder = folder;
+    }
+
+    protected File getFolder() {
+        return folder;
+    }
+
+    protected Collection<File> getJarFiles() {
+        return Arrays.asList(folder.listFiles(JarFilenameFilter.INSTANCE));
+    }
+
+    private static class JarFilenameFilter implements FilenameFilter {
+        private static JarFilenameFilter INSTANCE = new JarFilenameFilter();
+        @Override
+        public boolean accept(File dir, String name) {
+            return name.endsWith(".jar");
+        }
     }
 
     @Override
-    protected PluginHandle load(PluginManager manager, String pluginName, Map<String, String> mains) {
-        String main = mains.get(pluginName);
+    public PluginHandle load(PluginManager manager, String pluginName) {
+        String main = null;
         if (main != null) {
             try {
-                Class<?> clazz = Class.forName(main, false, getClassLoader());
+                Class<?> clazz = Class.forName(main, false, cl);
                 Method enable = null;
                 Method disable = null;
 
+                outer:
                 for (Class<?> cls = clazz; cls != null; cls = cls.getSuperclass()) {
                     for (Method m : cls.getDeclaredMethods()) {
                         m.setAccessible(true);
@@ -65,11 +95,8 @@ public class AnnotatedJavaPluginLoader extends AbstractSingleClassLoaderJavaPlug
                             disable = m;
                         }
                         if (enable != null && disable != null) {
-                            break;
+                            break outer;
                         }
-                    }
-                    if (enable != null && disable != null) {
-                        break;
                     }
                 }
 
@@ -105,4 +132,25 @@ public class AnnotatedJavaPluginLoader extends AbstractSingleClassLoaderJavaPlug
         return false;
     }
 
+    @Override
+    public Map<String, PluginHandle> loadAll(PluginManager manager) {
+        Map<String, PluginHandle> loaded = new HashMap<>();
+        for (File file : getJarFiles()) {
+            try {
+                for (Class<?> plugin : find(file.toURI().toURL(), cl)) {
+                    Plugin ann = plugin.getAnnotation(Plugin.class);
+                    String name = ann.name();
+                    loaded.put(name, load(manager, name));
+                }
+            } catch (MalformedURLException ex) {
+                ex.printStackTrace();
+            }
+        }
+        return loaded;
+    }
+
+    public static Set<Class<?>> find(URL url, ClassLoader cl) {
+        Reflections ref = new Reflections(new ConfigurationBuilder().addUrls(url).addClassLoader(cl).setScanners(new TypeAnnotationsScanner()));
+        return ref.getTypesAnnotatedWith(Plugin.class);
+    }
 }

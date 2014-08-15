@@ -21,13 +21,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.flowpowered.plugins;
+package com.flowpowered.plugins.annotated;
 
-import java.util.Map;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public interface PluginLoader {
-
-    PluginHandle load(PluginManager manager, String pluginName) throws PluginException;
-
-    Map<String, PluginHandle> loadAll(PluginManager manager);
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface Plugin {
+    String name();
 }

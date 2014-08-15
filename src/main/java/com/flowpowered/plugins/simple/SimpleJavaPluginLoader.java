@@ -23,19 +23,104 @@
  */
 package com.flowpowered.plugins.simple;
 
+import java.io.IOException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Map;
 
+import com.flowpowered.cerealization.config.Configuration;
+import com.flowpowered.cerealization.config.ConfigurationNode;
+import com.flowpowered.cerealization.config.yaml.YamlConfiguration;
 import com.flowpowered.plugins.PluginException;
 import com.flowpowered.plugins.PluginHandle;
+import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
 import com.flowpowered.plugins.WrappedPluginException;
 
-public class SimpleJavaPluginLoader extends AbstractSingleClassLoaderJavaPluginLoader {
+public class SimpleJavaPluginLoader implements PluginLoader {
+    static final String DESCRIPTOR_NAME = "plugin.yml";
+    static final String NAME_KEY = "name";
+    static final String MAIN_KEY = "main";
+
+    private final ClassLoader cl;
+    private final String descriptorName, nameKey, mainKey;
+
     public SimpleJavaPluginLoader(ClassLoader cl) {
-        super(cl);
+        this(cl, DESCRIPTOR_NAME, NAME_KEY, MAIN_KEY);
+    }
+
+    public SimpleJavaPluginLoader(ClassLoader cl, String descriptorName) {
+        this(cl, descriptorName, NAME_KEY, MAIN_KEY);
+    }
+
+    public SimpleJavaPluginLoader(ClassLoader cl, String descriptorName, String nameKey, String mainKey) {
+        this.cl = cl;
+        this.descriptorName = descriptorName;
+        this.nameKey = nameKey;
+        this.mainKey = mainKey;
+    }
+
+    protected ClassLoader getClassLoader() {
+        return cl;
     }
 
     @Override
+    public PluginHandle load(PluginManager manager, String pluginName) throws PluginException {
+        return load(manager, pluginName, findMains());
+    }
+
+    @Override
+    public Map<String, PluginHandle> loadAll(PluginManager manager) {
+        Map<String, PluginHandle> loaded = new HashMap<>();
+        Map<String, String> mains = findMains();
+        for (String name : mains.keySet()) {
+            try {
+                PluginHandle plugin = load(manager, name, mains);
+                if (plugin != null) {
+                    loaded.put(name, plugin);
+                }
+            } catch (PluginException e) {
+                // TODO: log
+            }
+        }
+        return loaded;
+    }
+
+    protected Map<String, String> findMains() {
+        Map<String, String> mains = new HashMap<>();
+        Enumeration<URL> urls;
+        try {
+            urls = getClassLoader().getResources(descriptorName);
+        } catch (IOException e) {
+            // TODO log
+            e.printStackTrace();
+            return mains;
+        }
+        for (URL url : Collections.list(urls)) {
+            try {
+                Configuration conf = new YamlConfiguration(url.openStream());
+                ConfigurationNode name = conf.getChild(nameKey);
+                if (name == null || name.getString("").isEmpty()) {
+                    // TODO: log
+                    continue;
+                }
+                ConfigurationNode main = conf.getChild(mainKey);
+                if (name == null || name.getString("").isEmpty()) {
+                    // TODO: log
+                    continue;
+                }
+                mains.put(name.getString(), main.getString());
+            } catch (IOException e) {
+                // TODO: log
+                e.printStackTrace();
+            }
+
+        }
+        return mains;
+    }
+
     protected PluginHandle load(PluginManager manager, String pluginName, Map<String, String> mains) throws PluginException {
         String main = mains.get(pluginName);
         if (main == null) {
