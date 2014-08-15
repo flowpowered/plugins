@@ -23,14 +23,14 @@
  */
 package com.flowpowered.plugins.annotated;
 
-import java.io.File;
-import java.io.FilenameFilter;
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -44,26 +44,33 @@ import org.reflections.util.ConfigurationBuilder;
 
 public class AnnotatedJavaPluginLoader implements PluginLoader {
     private final ClassLoader cl;
-    private final File folder;
+    private final Path path;
 
-    public AnnotatedJavaPluginLoader(File folder, ClassLoader cl) {
+    public AnnotatedJavaPluginLoader(Path folder, ClassLoader cl) {
         this.cl = cl;
-        this.folder = folder;
+        this.path = folder;
     }
 
-    protected File getFolder() {
-        return folder;
+    protected Path getPath() {
+        return path;
     }
 
-    protected Collection<File> getJarFiles() {
-        return Arrays.asList(folder.listFiles(JarFilenameFilter.INSTANCE));
+    protected DirectoryStream<Path> getJarFiles() {
+        if (!Files.isDirectory(path)) {
+            throw new IllegalArgumentException("Path " + path + " is not a directory!");
+        }
+        try {
+            return Files.newDirectoryStream(path, JarDirectoryStreamFilter.INSTANCE);
+        } catch (IOException e) {
+            throw new RuntimeException("IO error occurred while traversing addons dir", e);
+        }
     }
 
-    private static class JarFilenameFilter implements FilenameFilter {
-        private static JarFilenameFilter INSTANCE = new JarFilenameFilter();
+    private static class JarDirectoryStreamFilter implements DirectoryStream.Filter<Path> {
+        private static JarDirectoryStreamFilter INSTANCE = new JarDirectoryStreamFilter();
         @Override
-        public boolean accept(File dir, String name) {
-            return name.endsWith(".jar");
+        public boolean accept(Path entry) throws IOException {
+            return !Files.isDirectory(entry) && entry.endsWith(".jar");
         }
     }
 
@@ -135,9 +142,9 @@ public class AnnotatedJavaPluginLoader implements PluginLoader {
     @Override
     public Map<String, PluginHandle> loadAll(PluginManager manager) {
         Map<String, PluginHandle> loaded = new HashMap<>();
-        for (File file : getJarFiles()) {
+        for (Path jarPath : getJarFiles()) {
             try {
-                for (Class<?> plugin : find(file.toURI().toURL(), cl)) {
+                for (Class<?> plugin : find(jarPath.toUri().toURL(), cl)) {
                     Plugin ann = plugin.getAnnotation(Plugin.class);
                     String name = ann.name();
                     loaded.put(name, load(manager, name));
