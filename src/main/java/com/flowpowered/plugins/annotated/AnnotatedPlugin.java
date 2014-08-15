@@ -38,6 +38,7 @@ public class AnnotatedPlugin extends Plugin {
     @Override
     protected void onEnable() throws Exception {
         try {
+            if (enable == null) return;
             enable.invoke(annotated, context);
         } catch (IllegalAccessException | IllegalArgumentException e) {
             throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
@@ -50,6 +51,7 @@ public class AnnotatedPlugin extends Plugin {
     @Override
     protected void onDisable() throws Exception {
         try {
+            if (disable == null) return;
             disable.invoke(annotated, context);
         } catch (IllegalAccessException | IllegalArgumentException e) {
             throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
