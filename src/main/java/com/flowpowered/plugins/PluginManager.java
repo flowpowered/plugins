@@ -35,11 +35,15 @@ public class PluginManager {
     private final List<PluginLoader> loaders = new LinkedList<>(); // TODO: Make this a set and make PluginLoaders hashset/map compatible?
     private final Map<String, PluginHandle> plugins = new HashMap<>();
     private final Logger logger;
-    private final String pluginLoggerPrefix;
+    private final PluginLoggerFactory logFactory;
+
+    public PluginManager(Logger logger, PluginLoggerFactory factory) {
+        this.logger = logger;
+        this.logFactory = factory;
+    }
 
     public PluginManager(Logger logger) {
-        this.logger = logger;
-        this.pluginLoggerPrefix = logger.getName() + ".";
+        this(logger, defaultPluginLoggerFactory(logger));
     }
 
     public void enable(PluginHandle plugin) throws PluginException {
@@ -80,7 +84,7 @@ public class PluginManager {
         }
     }
 
-    public void addLoader(PluginLoader loader) {
+    protected void addLoader(PluginLoader loader) {
         loaders.add(loader);
         /* TODO: Don't load all of them like this:
          * - this overrides existing ones with the same name
@@ -91,10 +95,20 @@ public class PluginManager {
     }
 
     public Logger getLogger(PluginHandle plugin) {
-        return LoggerFactory.getLogger(pluginLoggerPrefix + plugin.getName());
+        return logFactory.getLogger(plugin.getName());
     }
 
     public PluginHandle getPluginHandle(String name) {
         return plugins.get(name);
+    }
+
+    protected static PluginLoggerFactory defaultPluginLoggerFactory(Logger logger) {
+        final String prefix = logger.getName() + ".";
+        return new PluginLoggerFactory() {
+            @Override
+            public Logger getLogger(String pluginName) {
+                return LoggerFactory.getLogger(prefix + pluginName);
+            }
+        };
     }
 }
