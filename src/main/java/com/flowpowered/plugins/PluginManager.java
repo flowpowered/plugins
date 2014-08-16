@@ -23,6 +23,8 @@
  */
 package com.flowpowered.plugins;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -111,6 +113,10 @@ public class PluginManager {
 
     public PluginState getState(Plugin plugin) {
         return states.get(plugin);
+    }
+
+    public Collection<Plugin> getPlugins() {
+        return Collections.unmodifiableCollection(plugins.values());
     }
 
     protected static PluginLoggerFactory defaultPluginLoggerFactory(Logger logger) {
