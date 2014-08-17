@@ -32,45 +32,45 @@ import java.util.Map;
 import java.util.Set;
 
 public class PluginClassLoader extends URLClassLoader {
-	private final Map<String, Class<?>> classes = new HashMap<>();
+    private final Map<String, Class<?>> classes = new HashMap<>();
 
-	public PluginClassLoader(final ClassLoader parent) {
-		super(new URL[0], parent);
-	}
+    public PluginClassLoader(final ClassLoader parent) {
+        super(new URL[0], parent);
+    }
 
-	@Override
-	public void addURL(URL url) {
-		super.addURL(url);
-	}
+    @Override
+    public void addURL(URL url) {
+        super.addURL(url);
+    }
 
-	@Override
-	protected Class<?> findClass(String name) throws ClassNotFoundException {
-		Class<?> result = classes.get(name);
-		if (result != null) {
+    @Override
+    protected Class<?> findClass(String name) throws ClassNotFoundException {
+        Class<?> result = classes.get(name);
+        if (result != null) {
             return result;
         }
         return super.findClass(name);
-	}
-
-    public Class<?> defineClass(byte[] clazz) {
-        return defineClass(clazz, 0, clazz.length);
     }
 
-	/**
-	 * Returns a set of cached classes' names
-	 *
-	 * @return set of class names
-	 */
-	public Set<String> getClassNames() {
-		return Collections.unmodifiableSet(classes.keySet());
-	}
+    public Class<?> defineClass(byte[] clazz) {
+        return defineClass(null, clazz, 0, clazz.length);
+    }
 
-	/**
-	 * Returns a set of cached classes
-	 *
-	 * @return set of classes
-	 */
-	public Collection<Class<?>> getClasses() {
-		return Collections.unmodifiableCollection(classes.values());
-	}
+    /**
+     * Returns a set of cached classes' names
+     *
+     * @return set of class names
+     */
+    public Set<String> getClassNames() {
+        return Collections.unmodifiableSet(classes.keySet());
+    }
+
+    /**
+     * Returns a set of cached classes
+     *
+     * @return set of classes
+     */
+    public Collection<Class<?>> getClasses() {
+        return Collections.unmodifiableCollection(classes.values());
+    }
 }

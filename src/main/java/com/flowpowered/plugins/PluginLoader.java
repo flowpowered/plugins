@@ -23,11 +23,49 @@
  */
 package com.flowpowered.plugins;
 
+import java.lang.reflect.Field;
 import java.util.Map;
 
-public interface PluginLoader {
+public abstract class PluginLoader<C extends Context> {
+    private static final Field nameField = PluginLoader.getFieldSilent(Plugin.class, "name");
+    private static final Field managerField = PluginLoader.getFieldSilent(Plugin.class, "manager");
+    private static final Field contextField = PluginLoader.getFieldSilent(Plugin.class, "context");
+    private final ContextCreator<C> contextCreator;
 
-    Plugin load(PluginManager manager, String pluginName) throws InvalidPluginException;
+    public PluginLoader(ContextCreator<C> contextCreator) {
+        this.contextCreator = contextCreator;
+    }
 
-    Map<String, Plugin> loadAll(PluginManager manager);
+    public abstract Plugin<C> load(PluginManager<C> manager, String pluginName) throws InvalidPluginException;
+
+    public abstract Map<String, Plugin<C>> loadAll(PluginManager<C> manager);
+
+    protected Plugin<C> init(Plugin<C> plugin, String name, PluginManager<C> manager) {
+        setField(nameField, plugin, name);
+        setField(managerField, plugin, manager);
+        setField(contextField, plugin, createContext(plugin));
+        return plugin;
+    }
+
+    public C createContext(Plugin<C> plugin) {
+        return contextCreator.createContext(plugin);
+    }
+
+    public static Field getFieldSilent(Class<?> clazz, String name) {
+        try {
+            return clazz.getDeclaredField(name);
+        } catch (NoSuchFieldException | SecurityException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
+
+    public static void setField(Field f, Object instance, Object value) {
+        try {
+            f.setAccessible(true);
+            f.set(instance, value);
+            f.setAccessible(false);
+        } catch (IllegalAccessException | IllegalArgumentException ex) {
+            throw new IllegalStateException(ex);
+        }
+    }
 }

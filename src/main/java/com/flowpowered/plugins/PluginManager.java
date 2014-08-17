@@ -34,10 +34,10 @@ import java.util.Map.Entry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PluginManager {
-    private final List<PluginLoader> loaders = new LinkedList<>(); // TODO: Make this a set and make PluginLoaders hashset/map compatible?
-    private final Map<String, Plugin> plugins = new HashMap<>();
-    private final Map<Plugin, PluginState> states = new HashMap<>();
+public class PluginManager<C extends Context> {
+    private final List<PluginLoader<C>> loaders = new LinkedList<>(); // TODO: Make this a set and make PluginLoaders hashset/map compatible?
+    private final Map<String, Plugin<C>> plugins = new HashMap<>();
+    private final Map<Plugin<C>, PluginState> states = new HashMap<>();
     private final Logger logger;
     private final PluginLoggerFactory logFactory;
 
@@ -50,7 +50,7 @@ public class PluginManager {
         this(logger, defaultPluginLoggerFactory(logger));
     }
 
-    public void enable(Plugin plugin) throws Exception {
+    public void enable(Plugin<C> plugin) throws Exception {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
@@ -69,7 +69,7 @@ public class PluginManager {
         }
     }
 
-    public void disable(Plugin plugin) throws Exception {
+    public void disable(Plugin<C> plugin) throws Exception {
         if (plugin.getManager() != this) {
             throw new IllegalArgumentException("Not our plugin");
         }
@@ -88,34 +88,34 @@ public class PluginManager {
         }
     }
 
-    protected void addLoader(PluginLoader loader) {
+    protected void addLoader(PluginLoader<C> loader) {
         loaders.add(loader);
         /* TODO: Don't load all of them like this:
          * - this overrides existing ones with the same name
          * - this loads more than needed, should be more lazy
          * - this scans for them only once and never checks again
          */
-        Map<String, Plugin> all = loader.loadAll(this);
-        for (Entry<String, Plugin> e : all.entrySet()) {
-            Plugin plugin = e.getValue();
+        Map<String, Plugin<C>> all = loader.loadAll(this);
+        for (Entry<String, Plugin<C>> e : all.entrySet()) {
+            Plugin<C> plugin = e.getValue();
             plugins.put(e.getKey(), plugin);
             states.put(plugin, PluginState.DISABLED);
         }
     }
 
-    public Logger getLogger(Plugin plugin) {
+    public Logger getLogger(Plugin<C> plugin) {
         return logFactory.getLogger(plugin.getName());
     }
 
-    public Plugin getPlugin(String name) {
+    public Plugin<C> getPlugin(String name) {
         return plugins.get(name);
     }
 
-    public PluginState getState(Plugin plugin) {
+    public PluginState getState(Plugin<C> plugin) {
         return states.get(plugin);
     }
 
-    public Collection<Plugin> getPlugins() {
+    public Collection<Plugin<C>> getPlugins() {
         return Collections.unmodifiableCollection(plugins.values());
     }
 

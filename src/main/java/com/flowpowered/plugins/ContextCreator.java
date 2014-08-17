@@ -23,42 +23,15 @@
  */
 package com.flowpowered.plugins;
 
-import org.slf4j.Logger;
+public interface ContextCreator<C extends Context> {
+    C createContext(Plugin<C> plugin);
 
-public abstract class Plugin<C extends Context> {
-    private String name;
-    private PluginManager<C> manager;
-    private C context;
-
-    public PluginManager<C> getManager() {
-        return manager;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public C getContext() {
-        return context;
-    }
-
-    protected abstract void onEnable() throws Exception;
-
-    protected abstract void onDisable() throws Exception;
-
-    public void enable() throws Exception {
-        manager.enable(this);
-    }
-
-    public void disable() throws Exception {
-        manager.disable(this);
-    }
-
-    public Logger getLogger() {
-        return manager.getLogger(this);
-    }
-
-    public PluginState getState() {
-        return manager.getState(this);
+    public static class NoContextCreator implements ContextCreator<Context> {
+        public static final NoContextCreator INSTANCE = new NoContextCreator();
+        @Override
+        public Context createContext(Plugin<Context> plugin) {
+            return new Context(plugin);
+        }
+        
     }
 }

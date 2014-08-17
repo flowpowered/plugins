@@ -21,31 +21,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-package com.flowpowered.plugins.annotated;
+package com.flowpowered.plugins;
 
-import com.flowpowered.plugins.Plugin;
-import com.flowpowered.plugins.PluginManager;
-import org.slf4j.Logger;
-
+/**
+ * Holds a link to the {@link Plugin} but also is used to hold broader information about what holds the {@link Plugin} (e.g. an engine).
+ */
 public class Context {
-    private final PluginManager manager;
-    private final Plugin handle;
+    private final Plugin<?> plugin;
 
-    public Context(PluginManager manager, Plugin handle) {
-        this.manager = manager;
-        this.handle = handle;
+    public Context(Plugin<?> plugin) {
+        this.plugin = plugin;
     }
 
-    public String getName() {
-        return handle.getName();
+    @SuppressWarnings("unchecked")
+    public <P extends Plugin<? extends Context>> P getPlugin() {
+        // This is inherently unsafe
+        // Checks should be done before assigning the plugin to this context to ensure that the Plugin's type parameter at least matches the current class
+        return (P) plugin;
     }
-
-    public PluginManager getManager() {
-        return manager;
-    }
-
-    public Logger getLogger() {
-        return handle.getLogger();
-    }
-
 }

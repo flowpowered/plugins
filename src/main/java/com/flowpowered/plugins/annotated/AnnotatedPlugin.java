@@ -26,38 +26,40 @@ package com.flowpowered.plugins.annotated;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.flowpowered.plugins.Context;
 import com.flowpowered.plugins.Plugin;
 
 
-public class AnnotatedPlugin extends Plugin {
+public class AnnotatedPlugin<C extends Context> extends Plugin<C> {
     private Object annotated;
     private Method enable;
     private Method disable;
-    private Context context;
 
     @Override
     protected void onEnable() throws Exception {
         try {
             if (enable == null) return;
-            enable.invoke(annotated, context);
+            enable.invoke(annotated, getContext());
         } catch (IllegalAccessException | IllegalArgumentException e) {
             throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
         } catch (InvocationTargetException e) {
             throw new Exception("Exception in enable method", e.getCause());
         }
-
     }
 
     @Override
     protected void onDisable() throws Exception {
         try {
             if (disable == null) return;
-            disable.invoke(annotated, context);
+            disable.invoke(annotated, getContext());
         } catch (IllegalAccessException | IllegalArgumentException e) {
             throw new IllegalStateException("Got exception from reflection even though the method passed our checks", e);
         } catch (InvocationTargetException e) {
             throw new Exception("Exception in enable method", e.getCause());
         }
+    }
 
+    public Object getAnnotated() {
+        return annotated;
     }
 }

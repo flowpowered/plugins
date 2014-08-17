@@ -37,6 +37,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import com.flowpowered.plugins.Context;
+import com.flowpowered.plugins.ContextCreator;
 import com.flowpowered.plugins.InvalidPluginException;
 import com.flowpowered.plugins.PluginClassLoader;
 import com.flowpowered.plugins.PluginLoader;
@@ -47,17 +49,15 @@ import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 
 
-public class AnnotatedPluginLoader implements PluginLoader {
+public class AnnotatedPluginLoader<C extends Context> extends PluginLoader<C> {
     private final ClassLoader cl;
     private final Path path;
-    private static final Field nameField = SimplePluginLoader.getFieldSilent(com.flowpowered.plugins.Plugin.class, "name");
-    private static final Field managerField = SimplePluginLoader.getFieldSilent(com.flowpowered.plugins.Plugin.class, "manager");
-    private static final Field objectField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "annotated");
-    private static final Field enableField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "enable");
-    private static final Field disableField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "disable");
-    private static final Field contextField = SimplePluginLoader.getFieldSilent(AnnotatedPlugin.class, "context");
+    private static final Field objectField = PluginLoader.getFieldSilent(AnnotatedPlugin.class, "annotated");
+    private static final Field enableField = PluginLoader.getFieldSilent(AnnotatedPlugin.class, "enable");
+    private static final Field disableField = PluginLoader.getFieldSilent(AnnotatedPlugin.class, "disable");
 
-    public AnnotatedPluginLoader(Path folder, ClassLoader cl) {
+    public AnnotatedPluginLoader(ContextCreator<C> contextCreator, Path folder, ClassLoader cl) {
+        super(contextCreator);
         this.cl = cl;
         this.path = folder;
     }
@@ -67,12 +67,12 @@ public class AnnotatedPluginLoader implements PluginLoader {
     }
 
     @Override
-    public Map<String, com.flowpowered.plugins.Plugin> loadAll(PluginManager manager) {
+    public Map<String, com.flowpowered.plugins.Plugin<C>> loadAll(PluginManager<C> manager) {
         return loadPath(manager, path);
     }
 
-    private Map<String, com.flowpowered.plugins.Plugin> loadPath(PluginManager manager, Path path) {
-        Map<String, com.flowpowered.plugins.Plugin> loaded = new HashMap<>();
+    private Map<String, com.flowpowered.plugins.Plugin<C>> loadPath(PluginManager<C> manager, Path path) {
+        Map<String, com.flowpowered.plugins.Plugin<C>> loaded = new HashMap<>();
         try {
             if (Files.isDirectory(path)) {
                 for (Path localPath : Files.newDirectoryStream(path, DirectoryStreamFilter.INSTANCE)) {
@@ -98,7 +98,7 @@ public class AnnotatedPluginLoader implements PluginLoader {
         return loaded;
     }
 
-    private void checkAndLoad(Map<String, com.flowpowered.plugins.Plugin> loaded, Class<?> check, PluginManager manager, PluginClassLoader pcl) {
+    private void checkAndLoad(Map<String, com.flowpowered.plugins.Plugin<C>> loaded, Class<?> check, PluginManager<C> manager, PluginClassLoader pcl) {
         Plugin ann = check.getAnnotation(Plugin.class);
         String name = ann.name();
         try {
@@ -108,36 +108,11 @@ public class AnnotatedPluginLoader implements PluginLoader {
         }
     }
 
-    public AnnotatedPlugin load(PluginManager manager, Plugin annotation, Class<?> clazz, ClassLoader cl) throws InvalidPluginException {
-        Method enable = null;
-        Method disable = null;
-        outer:
-        for (Class<?> cls = clazz; cls != null; cls = cls.getSuperclass()) {
-            for (Method m : cls.getDeclaredMethods()) {
-                m.setAccessible(true);
-                boolean canBeEnable = (enable == null && m.isAnnotationPresent(Enable.class));
-                boolean canBeDisable = (disable == null && m.isAnnotationPresent(Disable.class));
-                if (!(canBeEnable || canBeDisable)) {
-                    continue;
-                }
-                if (!validateMethod(m)) {
-                    continue;
-                }
-                if (canBeEnable) {
-                    enable = m;
-                }
-                if (canBeDisable) {
-                    disable = m;
-                }
-                if (enable != null && disable != null) {
-                    break outer;
-                }
-            }
-        }
+    public AnnotatedPlugin<C> load(PluginManager<C> manager, Plugin annotation, Class<?> clazz, ClassLoader cl) throws InvalidPluginException {
         try {
             Object annotated = clazz.newInstance();
-            AnnotatedPlugin plugin = new AnnotatedPlugin();
-            return init(plugin, annotation.name(), manager, annotated, enable, disable, new Context(manager, plugin));
+            AnnotatedPlugin<C> plugin = new AnnotatedPlugin<>();
+            return init(plugin, annotation.name(), manager, annotated);
         } catch (IllegalArgumentException | IllegalAccessException ex) {
             // Shouldn't happen
             throw new IllegalStateException(ex);
@@ -146,7 +121,7 @@ public class AnnotatedPluginLoader implements PluginLoader {
         }
     }
 
-    protected boolean validateMethod(Method method) {
+    protected boolean validateMethod(Method method, Class<? extends Context> contextClass) {
         if (Modifier.isAbstract(method.getModifiers())) {
             // TODO: log
             return false;
@@ -160,25 +135,50 @@ public class AnnotatedPluginLoader implements PluginLoader {
             // TODO: log
             return false;
         }
-        if (!Context.class.isAssignableFrom(params[0])) {
+        // We can use the generic Context or a specifc one
+        // However, the parameter can never be a subclass
+        if (!params[0].isAssignableFrom(contextClass)) {
             // TODO: log
             return false;
         }
         return true;
     }
 
-    protected AnnotatedPlugin init(AnnotatedPlugin plugin, String name, PluginManager manager, Object annotated, Method enable, Method disable, Context context) throws IllegalArgumentException, IllegalAccessException {
-        SimplePluginLoader.setField(nameField, plugin, name);
-        SimplePluginLoader.setField(managerField, plugin, manager);
+    protected AnnotatedPlugin<C> init(AnnotatedPlugin<C> plugin, String name, PluginManager<C> manager, Object annotated) throws IllegalArgumentException, IllegalAccessException {
+        super.init(plugin, name, manager);
+        Method enable = null;
+        Method disable = null;
+        outer:
+        for (Class<?> cls = annotated.getClass(); cls != null; cls = cls.getSuperclass()) {
+            for (Method m : cls.getDeclaredMethods()) {
+                m.setAccessible(true);
+                boolean canBeEnable = (enable == null && m.isAnnotationPresent(Enable.class));
+                boolean canBeDisable = (disable == null && m.isAnnotationPresent(Disable.class));
+                if (!(canBeEnable || canBeDisable)) {
+                    continue;
+                }
+                if (!validateMethod(m, plugin.getContext().getClass())) {
+                    continue;
+                }
+                if (canBeEnable) {
+                    enable = m;
+                }
+                if (canBeDisable) {
+                    disable = m;
+                }
+                if (enable != null && disable != null) {
+                    break outer;
+                }
+            }
+        }
         SimplePluginLoader.setField(objectField, plugin, annotated);
         SimplePluginLoader.setField(enableField, plugin, enable);
         SimplePluginLoader.setField(disableField, plugin, disable);
-        SimplePluginLoader.setField(contextField, plugin, context);
         return plugin;
     }
 
     @Override
-    public com.flowpowered.plugins.Plugin load(PluginManager manager, String pluginName) throws InvalidPluginException {
+    public com.flowpowered.plugins.Plugin<C> load(PluginManager<C> manager, String pluginName) throws InvalidPluginException {
         // TODO: remove this
         return loadAll(manager).get(pluginName);
     }

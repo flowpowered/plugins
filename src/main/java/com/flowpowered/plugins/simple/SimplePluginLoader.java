@@ -24,7 +24,6 @@
 package com.flowpowered.plugins.simple;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,30 +35,30 @@ import com.flowpowered.cerealization.config.Configuration;
 import com.flowpowered.cerealization.config.ConfigurationException;
 import com.flowpowered.cerealization.config.ConfigurationNode;
 import com.flowpowered.cerealization.config.yaml.YamlConfiguration;
+import com.flowpowered.plugins.Context;
+import com.flowpowered.plugins.ContextCreator;
 import com.flowpowered.plugins.InvalidPluginException;
 import com.flowpowered.plugins.Plugin;
 import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
 
-public class SimplePluginLoader implements PluginLoader {
+public class SimplePluginLoader<C extends Context> extends PluginLoader<C> {
     private static final String DESCRIPTOR_NAME = "plugin.yml";
     private static final String NAME_KEY = "name";
     private static final String MAIN_KEY = "main";
-    private static final Field nameField = getFieldSilent(Plugin.class, "name");
-    private static final Field managerField = getFieldSilent(Plugin.class, "manager");
     private final ClassLoader cl;
     private final String descriptorName, nameKey, mainKey;
 
-
-    public SimplePluginLoader(ClassLoader cl) {
-        this(cl, DESCRIPTOR_NAME);
+    public SimplePluginLoader(ContextCreator<C> contextCreator, ClassLoader cl) {
+        this(contextCreator, cl, DESCRIPTOR_NAME);
     }
 
-    public SimplePluginLoader(ClassLoader cl, String descriptorName) {
-        this(cl, descriptorName, NAME_KEY, MAIN_KEY);
+    public SimplePluginLoader(ContextCreator<C> contextCreator, ClassLoader cl, String descriptorName) {
+        this(contextCreator, cl, descriptorName, NAME_KEY, MAIN_KEY);
     }
 
-    public SimplePluginLoader(ClassLoader cl, String descriptorName, String nameKey, String mainKey) {
+    public SimplePluginLoader(ContextCreator<C> contextCreator, ClassLoader cl, String descriptorName, String nameKey, String mainKey) {
+        super(contextCreator);
         this.cl = cl;
         this.descriptorName = descriptorName;
         this.nameKey = nameKey;
@@ -71,18 +70,19 @@ public class SimplePluginLoader implements PluginLoader {
     }
 
     @Override
-    public Plugin load(PluginManager manager, String pluginName) throws InvalidPluginException {
+    public Plugin<C> load(PluginManager<C> manager, String pluginName) throws InvalidPluginException {
         return load(manager, pluginName, findMains());
     }
 
-    protected Plugin load(PluginManager manager, String pluginName, Map<String, String> mains) throws InvalidPluginException {
+    protected Plugin<C> load(PluginManager<C> manager, String pluginName, Map<String, String> mains) throws InvalidPluginException {
         String main = mains.get(pluginName);
         if (main == null) {
             throw new InvalidPluginException("No main class specified");
         }
         try {
             Class<?> clazz = Class.forName(main, true, cl);
-            Class<? extends Plugin> pluginClass = clazz.asSubclass(Plugin.class);
+            @SuppressWarnings("unchecked")
+            Class<Plugin<C>> pluginClass = (Class<Plugin<C>>) clazz.asSubclass(Plugin.class);
             return init(pluginClass.newInstance(), pluginName, manager);
         } catch (ClassNotFoundException | ClassCastException | InstantiationException | IllegalAccessException e) {
             // TODO: log
@@ -93,18 +93,12 @@ public class SimplePluginLoader implements PluginLoader {
         return null;
     }
 
-    protected Plugin init(Plugin plugin, String name, PluginManager manager) throws IllegalArgumentException, IllegalAccessException {
-        setField(nameField, plugin, name);
-        setField(managerField, plugin, manager);
-        return plugin;
-    }
-
     @Override
-    public Map<String, Plugin> loadAll(PluginManager manager) {
-        Map<String, Plugin> loaded = new HashMap<>();
+    public Map<String, Plugin<C>> loadAll(PluginManager<C> manager) {
+        Map<String, Plugin<C>> loaded = new HashMap<>();
         Map<String, String> mains = findMains();
         for (String name : mains.keySet()) {
-            Plugin plugin;
+            Plugin<C> plugin;
             try {
                 plugin = load(manager, name, mains);
                 if (plugin != null) {
@@ -153,19 +147,5 @@ public class SimplePluginLoader implements PluginLoader {
 
         }
         return mains;
-    }
-
-    public static Field getFieldSilent(Class<?> clazz, String name) {
-        try {
-            return clazz.getDeclaredField(name);
-        } catch (NoSuchFieldException | SecurityException ex) {
-            throw new IllegalStateException(ex);
-        }
-    }
-
-    public static void setField(Field f, Object instance, Object value) throws IllegalArgumentException, IllegalAccessException {
-        f.setAccessible(true);
-        f.set(instance, value);
-        f.setAccessible(false);
     }
 }
