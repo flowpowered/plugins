@@ -45,6 +45,7 @@ import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
 import com.flowpowered.plugins.simple.SimplePluginLoader;
 import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ConfigurationBuilder;
 
@@ -184,7 +185,7 @@ public class AnnotatedPluginLoader<C extends Context> extends PluginLoader<C> {
     }
 
     public static Set<Class<?>> find(URL url, ClassLoader cl) {
-        Reflections ref = new Reflections(new ConfigurationBuilder().addUrls(url).addClassLoader(cl).setScanners(new TypeAnnotationsScanner()));
+        Reflections ref = new Reflections(new ConfigurationBuilder().addUrls(url).addClassLoader(cl).setScanners(new TypeAnnotationsScanner(), new SubTypesScanner()));
         return ref.getTypesAnnotatedWith(Plugin.class);
     }
 
