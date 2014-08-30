@@ -192,7 +192,7 @@ public class AnnotatedPluginLoader<C extends Context> extends PluginLoader<C> {
         private static DirectoryStreamFilter INSTANCE = new DirectoryStreamFilter();
         @Override
         public boolean accept(Path entry) throws IOException {
-            return Files.isDirectory(entry) || entry.endsWith(".jar") || entry.endsWith(".zip") || entry.endsWith(".class");
+            return Files.isDirectory(entry) || entry.getFileName().toString().endsWith(".jar") || entry.getFileName().toString().endsWith(".zip") || entry.getFileName().toString().endsWith(".class");
         }
     }
 }
