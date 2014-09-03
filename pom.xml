@@ -127,9 +127,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.reflections</groupId>
+            <groupId>com.flowpowered</groupId>
             <artifactId>reflections</artifactId>
-            <version>0.9.9-RC2</version>
+            <version>0.9.9-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
