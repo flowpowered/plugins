@@ -9,13 +9,13 @@
     <packaging>jar</packaging>
     <inceptionYear>2013</inceptionYear>
     <url>http://flowpowered.com</url>
-    <description>Plugins library for the Flow collection.</description>
+    <description>Extensible and modular library for creating Java-based plugins that are loaded separate from the main codebase at runtime.</description>
 
     <!-- Parent information -->
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>7</version>
+        <version>9</version>
     </parent>
 
     <!-- Build properties -->
@@ -30,7 +30,7 @@
     <licenses>
         <license>
             <name>MIT License</name>
-            <url>http://www.tldrlegal.com/license/mit-license</url>
+            <url>https://tldrlegal.com/license/mit-license</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -38,7 +38,7 @@
     <!-- Organization information -->
     <organization>
         <name>Spout LLC</name>
-        <url>http://www.spout.org</url>
+        <url>https://spout.org</url>
     </organization>
 
     <!-- Project developers -->
@@ -114,6 +114,7 @@
 
     <!-- Project dependencies -->
     <dependencies>
+        <!-- Transitive -->
         <dependency>
             <groupId>com.flowpowered</groupId>
             <artifactId>flow-commons</artifactId>
@@ -130,6 +131,7 @@
             <groupId>com.flowpowered</groupId>
             <artifactId>reflections</artifactId>
             <version>0.9.9-SNAPSHOT</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
@@ -215,16 +217,26 @@
                         <manifestEntries>
                             <Specification-Title>${project.name}</Specification-Title>
                             <Specification-Version>${project.version}+${ciSystem}-b${buildNumber}.git-${commit}</Specification-Version>
-                            <Specification-Vendor>${project.organization.name}</Specification-Vendor>
+                            <Specification-Vendor>${project.organization.name} - ${project.organization.url}</Specification-Vendor>
                         </manifestEntries>
                     </archive>
+                </configuration>
+            </plugin>
+            <!-- Javadoc creation plugin -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <configuration>
+                    <author>false</author>
+                    <version>false</version>
                 </configuration>
             </plugin>
             <!-- Coveralls reporting plugin  -->
             <plugin>
                 <groupId>org.eluder.coveralls</groupId>
                 <artifactId>coveralls-maven-plugin</artifactId>
-                <version>2.1.0</version>
+                <version>2.2.0</version>
             </plugin>
             <!-- Cobertura test coverage plugin -->
             <plugin>

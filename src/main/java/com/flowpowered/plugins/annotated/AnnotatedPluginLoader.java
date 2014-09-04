@@ -37,6 +37,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+import org.reflections.scanners.TypeAnnotationsScanner;
+import org.reflections.util.ConfigurationBuilder;
+
 import com.flowpowered.plugins.Context;
 import com.flowpowered.plugins.ContextCreator;
 import com.flowpowered.plugins.InvalidPluginException;
@@ -44,11 +49,6 @@ import com.flowpowered.plugins.PluginClassLoader;
 import com.flowpowered.plugins.PluginLoader;
 import com.flowpowered.plugins.PluginManager;
 import com.flowpowered.plugins.simple.SimplePluginLoader;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
-import org.reflections.scanners.TypeAnnotationsScanner;
-import org.reflections.util.ConfigurationBuilder;
-
 
 public class AnnotatedPluginLoader<C extends Context> extends PluginLoader<C> {
     private final ClassLoader cl;
@@ -136,7 +136,7 @@ public class AnnotatedPluginLoader<C extends Context> extends PluginLoader<C> {
             // TODO: log
             return false;
         }
-        // We can use the generic Context or a specifc one
+        // We can use the generic Context or a specific one
         // However, the parameter can never be a subclass
         if (!params[0].isAssignableFrom(contextClass)) {
             // TODO: log

@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import com.flowpowered.plugins.Context;
 import com.flowpowered.plugins.Plugin;
 
-
 public class AnnotatedPlugin<C extends Context> extends Plugin<C> {
     private Object annotated;
     private Method enable;

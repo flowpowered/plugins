@@ -27,5 +27,4 @@ import org.slf4j.Logger;
 
 public interface PluginLoggerFactory {
     Logger getLogger(String pluginName);
-
 }
