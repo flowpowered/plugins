@@ -2,8 +2,9 @@
 defaultTasks 'clean', 'licenseFormat', 'build', 'install'
 
 // Apply plugins
-apply plugin: 'cobertura'
-apply plugin: 'coveralls'
+apply plugin: 'java'
+apply plugin: 'cobertura' // Coveralls dependency
+apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'license'
 apply plugin: 'maven'
 apply plugin: 'signing'
@@ -15,12 +16,12 @@ archivesBaseName = 'flow-plugins'
 version = '0.1.0-SNAPSHOT'
 ext.packaging = 'jar'
 ext.inceptionYear = '2013'
-ext.url = 'http://flowpowered.com'
+ext.url = 'https://flowpowered.com/plugins'
 ext.description = 'Extensible and modular library for creating Java-based plugins that are loaded separate from the main codebase at runtime.'
 
 // Organization information
-ext.organization = 'Spout LLC'
-ext.organizationUrl = 'https://spout.org'
+ext.organization = 'Flow Powered'
+ext.organizationUrl = 'https://flowpowered.com'
 
 // Build properties
 ext.buildNumber = project.hasProperty('buildNumber') ? buildNumber : '0'
@@ -38,9 +39,9 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.9.0'
-        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:0.5.0'
-        classpath 'net.saliman:gradle-cobertura-plugin:2.2.4' // Coveralls plugin dependency
+        classpath 'net.saliman:gradle-cobertura-plugin:2.2.8' // Coveralls dependency
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.10.0'
+        classpath 'org.kt3k.gradle.plugin:coveralls-gradle-plugin:2.4.0'
     }
 }
 
@@ -56,7 +57,7 @@ repositories {
 
 // Project dependencies
 dependencies {
-    compile 'com.flowpowered:flow-commons:0.1.0-SNAPSHOT'
+    compile 'com.flowpowered:flow-commons:1.0.0'
     compile 'com.flowpowered:flow-cerealization:0.1.0-SNAPSHOT'
     compile 'com.flowpowered:reflections:0.9.9-SNAPSHOT'
 }
@@ -99,6 +100,15 @@ jar.manifest.mainAttributes(
         'Specification-Title': projectName,
         'Specification-Version': version + '+' + ciSystem + '-b' + buildNumber + '.git-' + commit,
         'Specification-Vendor': organization + ' - ' + organizationUrl)
+
+// Javadoc doclint configuration
+if (JavaVersion.current().isJava8Compatible()) {
+    allprojects {
+        tasks.withType(Javadoc) {
+            options.addStringOption('Xdoclint:none', '-quiet')
+        }
+    }
+}
 
 // Coveralls report configuration
 cobertura.coverageFormats = ['html', 'xml'] // Coveralls requires xml format
@@ -158,15 +168,15 @@ uploadArchives {
             description project.ext.description
 
             scm {
-                connection 'scm:git:git://github.com/flow/flow-plugins.git'
-                developerConnection 'scm:git:ssh://git@github.com:flow/flow-plugins.git'
-                url 'https://github.com/flow/flow-plugins'
+                connection 'scm:git:git://github.com/flow/plugins.git'
+                developerConnection 'scm:git:ssh://git@github.com:flow/plugins.git'
+                url 'https://github.com/flow/plugins'
             }
 
             licenses {
                 license {
                     name 'MIT License'
-                    url 'https://tldrlegal.com/license/mit-license'
+                    url 'https://tldrlegal.com/l/mit'
                     distribution 'repo'
                 }
             }
@@ -188,7 +198,7 @@ uploadArchives {
                     email 'wolf480@interia.pl'
                 }
                 developer {
-                    id 'Wulfspider'
+                    id 'lukespragg'
                     name 'Luke Spragg'
                     email 'the@wulf.im'
                 }
