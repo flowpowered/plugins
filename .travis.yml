@@ -31,7 +31,7 @@ after_success:
 deploy:
   provider: releases
   api-key: $GITHUB_TOKEN
-  file: "target/flow-commons-`cat version.txt`.jar"
+  file: "target/flow-plugins-`cat version.txt`.jar"
   skip_cleanup: true
   on:
     branch: master
