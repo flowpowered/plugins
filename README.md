@@ -1,4 +1,4 @@
-# Flow Plugins [![License](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)][License] [![Flattr this](http://img.shields.io/badge/flattr-donate-lightgrey.svg?style=flat)][Donate] [![Build Status](http://img.shields.io/travis/flow/flow-plugins/master.svg?style=flat)](https://travis-ci.org/flow/flow-plugins) [![Coverage Status](http://img.shields.io/coveralls/flow/flow-plugins/master.svg?style=flat)](https://coveralls.io/r/flow/flow-plugins)
+# Flow Plugins [![License](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)][License] [![Flattr this](http://img.shields.io/badge/flattr-donate-lightgrey.svg?style=flat)][Donate] [![Build Status](http://img.shields.io/travis/flow/plugins/develop.svg?style=flat)](https://travis-ci.org/flow/plugins) [![Coverage Status](http://img.shields.io/coveralls/flow/plugins/develop.svg?style=flat)](https://coveralls.io/r/flow/plugins)
 
 Extensible and modular library for creating Java-based plugins that are loaded separate from the main codebase at runtime.
 
