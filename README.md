@@ -1,4 +1,4 @@
-# Flow Plugins [![License](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)][License] [![Flattr this](http://img.shields.io/badge/flattr-donate-lightgrey.svg?style=flat)][Donate] [![Build Status](http://img.shields.io/travis/flow/flow-plugins/master.svg?style=flat)](https://travis-ci.org/flow/flow-plugins) [![Coverage Status](http://img.shields.io/coveralls/flow/flow-plugins/master.svg?style=flat)](https://coveralls.io/r/flow/flow-plugins)
+# Flow Plugins [![License](http://img.shields.io/badge/license-MIT-lightgrey.svg?style=flat)][License] [![Flattr this](http://img.shields.io/badge/flattr-donate-lightgrey.svg?style=flat)][Donate] [![Build Status](http://img.shields.io/travis/flow/plugins/develop.svg?style=flat)](https://travis-ci.org/flow/plugins) [![Coverage Status](http://img.shields.io/coveralls/flow/plugins/develop.svg?style=flat)](https://coveralls.io/r/flow/plugins)
 
 Extensible and modular library for creating Java-based plugins that are loaded separate from the main codebase at runtime.
 
@@ -45,7 +45,7 @@ If you're using [Maven](https://maven.apache.org/download.html) to manage projec
     <dependency>
         <groupId>com.flowpowered</groupId>
         <artifactId>flow-plugins</artifactId>
-        <version>0.1.0-SNAPSHOT</version>
+        <version>1.0.0</version>
     </dependency>
 
 If you're using [Gradle](https://www.gradle.org/) to manage project dependencies, simply include the following in your `build.gradle` file:
@@ -54,7 +54,7 @@ If you're using [Gradle](https://www.gradle.org/) to manage project dependencies
         mavenCentral()
     }
     dependencies {
-        compile 'com.flowpowered:flow-plugins:0.1.0-SNAPSHOT'
+        compile 'com.flowpowered:flow-plugins:1.0.0'
     }
 
 If you plan on using snapshots and do not already have the snapshot repo in your repository list, you will need to add this as well:
